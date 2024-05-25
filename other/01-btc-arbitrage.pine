@@ -1,0 +1,23 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © syoungs
+
+//@version=5
+indicator(title="BTC Arbitrage",shorttitle="BTC Arbitrage",overlay=true)
+
+// Create table
+// if str.contains(syminfo.ticker, "BTC")
+show = table.new(position.bottom_left, 1, 2, color.black)
+
+// CME Premium
+float cmev = request.security("CME:BTC1!","1",close) - request.security("BINANCE:BTCUSDT","1",close)
+string cmevs = str.tostring(cmev, '####')
+float cmep = ( cmev / request.security("BINANCE:BTCUSDT","1",close) ) * 100
+string cmeps = str.tostring(cmep, format.percent)
+table.cell(show, 0, 0, "CME "+cmevs+" ("+cmeps+")", 0, 0, text_color=cmev>=0?#82E0AA:#F1948A)
+
+// Upbit Premium
+float upbv = ( request.security("UPBIT:BTCKRW","1",close) / request.security("USDKRW","1",close) ) - request.security("BINANCE:BTCUSDT","1",close)
+string upbvs = str.tostring(upbv, '####')
+float upbp = ( upbv / request.security("BINANCE:BTCUSDT","1",close) ) * 100
+string upbps = str.tostring(upbp, format.percent)
+table.cell(show, 0, 1, "KOR "+upbvs+" ("+upbps+")", 0, 0, text_color=upbv>=0?#82E0AA:#F1948A)

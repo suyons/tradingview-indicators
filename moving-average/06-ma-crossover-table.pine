@@ -1,0 +1,69 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © su02ga
+
+//@version=5
+indicator("MA Crossover Table", overlay = true)
+
+time1 = input.timeframe(title="1", defval="1", inline="1", group="Timeframe")
+time2 = input.timeframe(title="2", defval="5", inline="1", group="Timeframe")
+time3 = input.timeframe(title="3", defval="15", inline="1", group="Timeframe")
+time4 = input.timeframe(title="4", defval="60", inline="1", group="Timeframe")
+
+leng1 = input.int(title="1", defval=10, inline = "1", group="MA Length")
+leng2 = input.int(title="2", defval=20, inline = "1", group="MA Length")
+leng3 = input.int(title="3", defval=60, inline = "1", group="MA Length")
+
+cls1 = request.security(syminfo.tickerid,time1,close)
+cls2 = request.security(syminfo.tickerid,time2,close)
+cls3 = request.security(syminfo.tickerid,time3,close)
+cls4 = request.security(syminfo.tickerid,time4,close)
+
+ma1_1 = ta.sma(cls1,leng1)
+ma1_2 = ta.sma(cls1,leng2)
+ma1_3 = ta.sma(cls1,leng3)
+ma2_1 = ta.sma(cls2,leng1)
+ma2_2 = ta.sma(cls2,leng2)
+ma2_3 = ta.sma(cls2,leng3)
+ma3_1 = ta.sma(cls3,leng1)
+ma3_2 = ta.sma(cls3,leng2)
+ma3_3 = ta.sma(cls3,leng3)
+ma4_1 = ta.sma(cls4,leng1)
+ma4_2 = ta.sma(cls4,leng2)
+ma4_3 = ta.sma(cls4,leng3)
+
+roc1_1 = ta.roc(ma1_1,4)
+roc1_2 = ta.roc(ma1_2,4)
+roc1_3 = ta.roc(ma1_3,4)
+roc2_1 = ta.roc(ma2_1,4)
+roc2_2 = ta.roc(ma2_2,4)
+roc2_3 = ta.roc(ma2_3,4)
+roc3_1 = ta.roc(ma3_1,4)
+roc3_2 = ta.roc(ma3_2,4)
+roc3_3 = ta.roc(ma3_3,4)
+roc4_1 = ta.roc(ma4_1,4)
+roc4_2 = ta.roc(ma4_2,4)
+roc4_3 = ta.roc(ma4_3,4)
+
+bull1 = ma1_1 >= ma1_2 and ma1_2 >= ma1_3 and roc1_2 >= 0 and roc1_3 >= 0
+bear1 = ma1_1 <= ma1_2 and ma1_2 <= ma1_3 and roc1_2 <= 0 and roc1_3 <= 0
+bull2 = ma2_1 >= ma1_2 and ma2_2 >= ma2_3 and roc2_2 >= 0 and roc2_3 >= 0
+bear2 = ma2_1 <= ma1_2 and ma2_2 <= ma2_3 and roc2_2 <= 0 and roc2_3 <= 0
+bull3 = ma3_1 >= ma3_2 and ma3_2 >= ma3_3 and roc3_2 >= 0 and roc3_3 >= 0
+bear3 = ma3_1 <= ma3_2 and ma3_2 <= ma3_3 and roc3_2 <= 0 and roc3_3 <= 0
+bull4 = ma4_1 >= ma4_2 and ma4_2 >= ma4_3 and roc4_2 >= 0 and roc4_3 >= 0
+bear4 = ma4_1 <= ma4_2 and ma4_2 <= ma4_3 and roc4_2 <= 0 and roc4_3 <= 0
+
+color1 = bull1 ? color.green : bear1 ? color.red : color.black
+color2 = bull2 ? color.green : bear2 ? color.red : color.black
+color3 = bull3 ? color.green : bear3 ? color.red : color.black
+color4 = bull4 ? color.green : bear4 ? color.red : color.black
+
+trend = table.new(position.top_center, 4, 2, color.white, color.black, 1, color.black, 1)
+table.cell(trend,0,0,time1,0,0,color.black)
+table.cell(trend,1,0,time2,0,0,color.black)
+table.cell(trend,2,0,time3,0,0,color.black)
+table.cell(trend,3,0,time4,0,0,color.black)
+table.cell(trend,0,1,bull1?"BULL":bear1?"BEAR":"NONE",0,0,color1)
+table.cell(trend,1,1,bull2?"BULL":bear2?"BEAR":"NONE",0,0,color2)
+table.cell(trend,2,1,bull3?"BULL":bear3?"BEAR":"NONE",0,0,color3)
+table.cell(trend,3,1,bull4?"BULL":bear4?"BEAR":"NONE",0,0,color4)

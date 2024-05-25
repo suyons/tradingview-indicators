@@ -1,0 +1,73 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © syoungs
+// @version=5
+
+indicator("Log Volume + Bollinger Band", overlay=false, format=format.price, precision=2)
+
+// Config
+mult = str.contains(syminfo.prefix, "FX") or str.contains(syminfo.type, "forex") ? 100000 : str.contains(syminfo.ticker, "XAUUSD") ? 100 : syminfo.pointvalue
+mult_str = math.log10(mult) >= 6 ? str.format("[{0,number,#.#}",mult/math.pow(10,6))+"M] " : math.log10(mult) >= 3 ? str.format("[{0,number,#.#}",mult/math.pow(10,3))+"K] " : str.format("[{0,number,#.#}] ",mult)
+// currency = str.contains(syminfo.currency, "USD") ? "$" : str.contains(syminfo.currency, "USX") ? "¢" : str.contains(syminfo.currency, "EUR") ? "€" : str.contains(syminfo.currency, "JPY") ? "¥" : str.contains(syminfo.currency, "KRW") ? "￦" : str.contains(syminfo.currency, "INR") ? "₹" : str.contains(syminfo.currency, "BTC") ? "₿" : str.contains(syminfo.currency, "HKD") ? "HK$" : syminfo.currency + " "
+currency = syminfo.currency + " "
+pos_in = input.int(1, "Table Position", 1, 9, 1, inline="1", group="Table")
+table_pos = switch pos_in
+    1 => position.top_left
+    2 => position.top_center
+    3 => position.top_right
+    4 => position.middle_left
+    5 => position.middle_center
+    6 => position.middle_right
+    7 => position.bottom_left
+    8 => position.bottom_center
+    => position.bottom_right
+usePrice = input.bool(true, "True = Vol × Price / False = Vol", inline="2", group="Table")
+volPrice = volume*close*mult
+vol = usePrice ? volPrice : volume
+useLog = input.bool(true, "True = log10 Vol / False = Vol", inline="3", group="Table")
+vol2 = useLog ? math.log10(vol) : vol
+
+barColorsOnPrevVolume = input(title="True = Volume color / False = Price color", defval=true, inline="4", group="Table")
+palette = barColorsOnPrevVolume ? (vol2[1] > vol2 ? #F1948A : #82E0AA) : (close[1] > close ? #F1948A : #82E0AA)
+
+// Calculating bollinger bands
+// +1σ -> 0.84     +2σ -> 0.97
+vollen = input.int(120, "Length", 1, 1000, 1, inline="1", group="Bollinger Band")
+typebb = input.string(title="Type", defval="HMA", inline="1", group="Bollinger Band", options = ["SMA", "EMA", "WMA", "HMA", "RMA", "VWMA", "ALMA"])
+
+med = switch typebb
+    "SMA" => ta.sma(vol2, vollen)
+    "EMA" => ta.ema(vol2, vollen)
+    "WMA" => ta.wma(vol2, vollen)
+    "HMA" => ta.hma(vol2, vollen)
+    "RMA" => ta.rma(vol2, vollen)
+    "VWMA" => ta.vwma(vol2, vollen)
+    "ALMA" => ta.alma(vol2, vollen, 1, 0)
+
+dev = ta.stdev(vol2, vollen)
+devmult_now = (vol2 - med) / dev
+// devmult_string = str.format(" ({0}{1,number,#.#}σ)", devmult_now > 0 ? "+" : "", devmult_now)
+// devmult_alert = input.float(2.0, "Alerts when stdev", 0, 9.9, 0.1, inline="5")
+// alertcondition(ta.crossover(devmult_now,devmult_alert),title='',message='{{interval}} Volume alert')
+
+devmult1 = input.float(2,"Upper", minval=-9.9, maxval=9.9, step=0.1, inline="2", group="Bollinger Band")
+devmult2 = input.float(-2,"Lower", minval=-9.9, maxval=9.9, step=0.1, inline="2", group="Bollinger Band")
+
+// Plot Bollinger band
+plot(vol2, color = palette, style=plot.style_line, title="Volume", linewidth=1)
+plot(med,"VolMA",color.new(#ffffff,50))
+plot(med+devmult1*dev,"Upper",color.new(#f7525f,50))
+plot(med+devmult2*dev,"Lower",color.new(#f7525f,50))
+
+// Display volume in text
+string value = na
+if usePrice
+    value := vol2 >= 12 ? str.format("{0,number,#.#}",volPrice/math.pow(10,12))+"T" : vol2 >= 9 ? str.format("{0,number,#.#}",volPrice/math.pow(10,9))+"B" : vol2 >= 6 ? str.format("{0,number,#.#}",volPrice/math.pow(10,6))+"M" : vol2 >= 3 ? str.format("{0,number,#.#}",volPrice/math.pow(10,3))+"K" : str.format("{0,number,#.#}",volPrice)
+    // value := str.tostring(volPrice, format.volume)
+else
+    value := vol2 >= 12 ? str.format("{0,number,#.#}",volume/math.pow(10,12))+"T" : vol2 >= 9 ? str.format("{0,number,#.#}",volume/math.pow(10,9))+"B" : vol2 >= 6 ? str.format("{0,number,#.#}",volume/math.pow(10,6))+"M" : vol2 >= 3 ? str.format("{0,number,#.#}",volume/math.pow(10,3))+"K" : str.format("{0,number,#.#}",volume)
+    // value := str.tostring(volOnly, format.volume)
+
+if vol2 >= 0
+    show = table.new(table_pos, 1, 1, color.black)
+    // table.cell(show, 0, 0, mult_str + currency + value + devmult_string, 0, 0, text_color=palette)
+    table.cell(show, 0, 0, mult_str + currency + value, 0, 0, text_color=palette)

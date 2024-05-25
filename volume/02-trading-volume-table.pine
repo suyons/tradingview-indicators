@@ -1,0 +1,50 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © syoungs
+// @version=5
+
+indicator("Trading Volume Table", overlay=true, format=format.volume, precision=0)
+
+mult = str.contains(syminfo.prefix, "FX") or str.contains(syminfo.type, "forex") ? 100000 : str.contains(syminfo.ticker, "XAUUSD") ? 100 : syminfo.pointvalue
+mult_str = math.log10(mult) >= 6 ? str.format("[{0,number,#.#}",mult/math.pow(10,6))+"M] " : math.log10(mult) >= 3 ? str.format("[{0,number,#.#}",mult/math.pow(10,3))+"K] " : str.format("[{0,number,#.#}] ",mult)
+// currency = str.contains(syminfo.currency, "USD") ? "$" : str.contains(syminfo.currency, "USX") ? "¢" : str.contains(syminfo.currency, "EUR") ? "€" : str.contains(syminfo.currency, "JPY") ? "¥" : str.contains(syminfo.currency, "KRW") ? "￦" : str.contains(syminfo.currency, "INR") ? "₹" : str.contains(syminfo.currency, "BTC") ? "₿" : str.contains(syminfo.currency, "HKD") ? "HK$" : syminfo.currency + " "
+currency = syminfo.currency + " "
+pos_in = input.int(1, "Table Position", 1, 9, 1, inline="1")
+table_pos = switch pos_in
+    1 => position.top_left
+    2 => position.top_center
+    3 => position.top_right
+    4 => position.middle_left
+    5 => position.middle_center
+    6 => position.middle_right
+    7 => position.bottom_left
+    8 => position.bottom_center
+    => position.bottom_right
+usePrice = input.bool(true, "True = Vol × Price / False = Vol", inline="2")
+volPrice = volume*close*mult
+vol = usePrice ? volPrice : volume
+useLog = input.bool(true, "True = log10 Vol / False = Vol (To calculate stdev)", inline="3")
+vol2 = useLog ? math.log10(vol) : vol
+
+// Statistics : calculating median & upper values
+// 2 to 0.97 - 1 to 0.84
+vollen = input.int(500, "Number of bars to count", 1, 1000, 1, inline="4")
+med = ta.sma(vol2, vollen)
+dev = ta.stdev(vol2, vollen)
+devmult_now = (vol2 - med) / dev
+devmult_string = str.format(" ({0}{1,number,#.#}σ)", devmult_now > 0 ? "+" : "", devmult_now)
+devmult_alert = input.float(2.0, "Alerts when Stdev mult cross over (E+σ1)", 0, 9.9, 0.1, inline="5")
+alertcondition(ta.crossover(devmult_now,devmult_alert),title='',message='{{interval}} Volume alert')
+// +1σ = 0.84     +2σ = 0.97
+
+// Display volume in text
+string value = na
+if usePrice
+    value := vol2 >= 12 ? str.format("{0,number,#.#}",volPrice/math.pow(10,12))+"T" : vol2 >= 9 ? str.format("{0,number,#.#}",volPrice/math.pow(10,9))+"B" : vol2 >= 6 ? str.format("{0,number,#.#}",volPrice/math.pow(10,6))+"M" : vol2 >= 3 ? str.format("{0,number,#.#}",volPrice/math.pow(10,3))+"K" : str.format("{0,number,#.#}",volPrice)
+    // value := str.tostring(volPrice, format.volume)
+else
+    value := vol2 >= 12 ? str.format("{0,number,#.#}",volume/math.pow(10,12))+"T" : vol2 >= 9 ? str.format("{0,number,#.#}",volume/math.pow(10,9))+"B" : vol2 >= 6 ? str.format("{0,number,#.#}",volume/math.pow(10,6))+"M" : vol2 >= 3 ? str.format("{0,number,#.#}",volume/math.pow(10,3))+"K" : str.format("{0,number,#.#}",volume)
+    // value := str.tostring(volOnly, format.volume)
+
+if vol2 >= 0
+    show = table.new(table_pos, 1, 1, color.black)
+    table.cell(show, 0, 0, mult_str + currency + value + devmult_string, 0, 0, text_color=open<close?#82E0AA:#F1948A)

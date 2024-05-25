@@ -1,0 +1,52 @@
+//@version=5
+indicator(title="Candlestick RSI", shorttitle="Candlestick RSI", format=format.price, precision=2)
+
+// ha_open = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, open)
+// ha_high = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, high)
+// ha_low = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, low)
+// ha_close = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, close)
+
+bar_open = request.security(ticker.standard(syminfo.tickerid), timeframe.period, open)
+bar_high = request.security(ticker.standard(syminfo.tickerid), timeframe.period, high)
+bar_low = request.security(ticker.standard(syminfo.tickerid), timeframe.period, low)
+bar_close = request.security(ticker.standard(syminfo.tickerid), timeframe.period, close)
+
+rsiLen = input.int(14, minval=1, title="RSI Length")
+rsitype = input.bool(true, "Candle / Line")
+// pricetype = input.bool(false, "Heikin Ashi / Bars")
+// rsiopen = ta.rsi(pricetype?ha_open:bar_open, rsiLen)
+// rsihigh = ta.rsi(pricetype?ha_high:bar_high, rsiLen)
+// rsilow = ta.rsi(pricetype?ha_low:bar_low, rsiLen)
+// rsiclose = ta.rsi(pricetype?ha_close:bar_close, rsiLen)
+rsiopen = ta.rsi(bar_open, rsiLen)
+rsihigh = ta.rsi(bar_high, rsiLen)
+rsilow = ta.rsi(bar_low, rsiLen)
+rsiclose = ta.rsi(bar_close, rsiLen)
+
+rsiH = input.int(70, "High", 51, 99, 1)
+rsiL = input.int(30, "Low", 1, 49, 1)
+
+candlecolor = if(rsiclose >= rsiopen)
+    color.green
+else
+    color.red
+hline(50, "RSI Middle Band", color=#787B86, linestyle=hline.style_dashed, display=display.none)
+plotcandle(rsitype?rsiopen:na, rsitype?rsihigh:na, rsitype?rsilow:na, rsitype?rsiclose:na, "RSI Candle", candlecolor, candlecolor, bordercolor=candlecolor)
+// plotbar(rsitype?rsiopen:na, rsitype?rsihigh:na, rsitype?rsilow:na, rsitype?rsiclose:na, "RSI Bar", candlecolor)
+plot(rsitype?na:rsiclose, "RSI Line", #9575cd, 1, plot.style_line)
+
+ob = hline(rsiH, title="Overbought", color=#787B86, linestyle=hline.style_dashed)
+os = hline(rsiL, title="Oversold", color=#787B86, linestyle=hline.style_dashed)
+
+malen = input.int(120, minval=1, title="BB Length")
+mult = input.float(2, title="BB Stdev", minval=0.1, maxval=9.9, step=0.1)
+sigma = ta.stdev(rsiclose, malen)
+ma = ta.hma(rsiclose, malen)
+upper = ma + mult * sigma
+lower = ma - mult * sigma
+plot(ma, "Moving Average", color.new(#9598a1, 20), 1, display=display.none)
+p_upper = plot(upper, "BB Upper", color.new(#9598a1, 20), 1, display=display.none)
+p_lower = plot(lower, "BB Lower", color.new(#9598a1, 20), 1, display=display.none)
+fill(plot1=p_upper, plot2=p_lower, color=color.new(#b2b5be, 80), title="BB Fill")
+
+alertcondition(ta.cross(rsiclose, rsiH) or ta.cross(rsiclose, rsiL), "RSI alert", "{{interval}} / RSI: {{plot_1}}")

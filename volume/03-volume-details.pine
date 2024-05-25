@@ -1,0 +1,38 @@
+//@version=5
+
+indicator('Volume Details', format=format.volume, precision=0)
+
+var buyColor = input(title='Total Volume (Buy Volume) Color', defval=#006400)
+var sellColor = input(title='Sell Volume Color', defval=#FE3333)
+var labelTextColor = input(title='Label Text Color', defval=#000000)
+var labelBgColor = input(title='Label Background Color', defval=#C0C0C0)
+var tablePosition = input.string(title='Labels Position', defval='Top Right', options=['Top Left', 'Top Right', 'Bottom Left', 'Bottom Right'])
+var volAvgLength = input(title='Vol Avg Line Length', defval=50)
+
+buyVolume = high == low ? 0 : volume * (close - low) / (high - low)
+sellVolume = high == low ? 0 : volume * (high - close) / (high - low)
+
+float volLast30DayAvg = (request.security(syminfo.tickerid, 'D', volume[1]) + request.security(syminfo.tickerid, 'D', volume[2]) + request.security(syminfo.tickerid, 'D', volume[3]) + request.security(syminfo.tickerid, 'D', volume[4]) + request.security(syminfo.tickerid, 'D', volume[5]) + request.security(syminfo.tickerid, 'D', volume[6]) + request.security(syminfo.tickerid, 'D', volume[7]) + request.security(syminfo.tickerid, 'D', volume[8]) + request.security(syminfo.tickerid, 'D', volume[9]) + request.security(syminfo.tickerid, 'D', volume[10]) + request.security(syminfo.tickerid, 'D', volume[11]) + request.security(syminfo.tickerid, 'D', volume[12]) + request.security(syminfo.tickerid, 'D', volume[13]) + request.security(syminfo.tickerid, 'D', volume[14]) + request.security(syminfo.tickerid, 'D', volume[15]) + request.security(syminfo.tickerid, 'D', volume[16]) + request.security(syminfo.tickerid, 'D', volume[17]) + request.security(syminfo.tickerid, 'D', volume[18]) + request.security(syminfo.tickerid, 'D', volume[19]) + request.security(syminfo.tickerid, 'D', volume[20]) + request.security(syminfo.tickerid, 'D', volume[21]) + request.security(syminfo.tickerid, 'D', volume[22]) + request.security(syminfo.tickerid, 'D', volume[23]) + request.security(syminfo.tickerid, 'D', volume[24]) + request.security(syminfo.tickerid, 'D', volume[25]) + request.security(syminfo.tickerid, 'D', volume[26]) + request.security(syminfo.tickerid, 'D', volume[27]) + request.security(syminfo.tickerid, 'D', volume[28]) + request.security(syminfo.tickerid, 'D', volume[29]) + request.security(syminfo.tickerid, 'D', volume[30])) / 30
+float todayVolume = request.security(syminfo.tickerid, 'D', volume)
+
+var table box = table.new(tablePosition == 'Top Left' ? position.top_left : tablePosition == 'Top Right' ? position.top_right : tablePosition == 'Bottom Left' ? position.bottom_left : position.bottom_right, 7, 1, labelBgColor, labelBgColor, 0, #000000, 2)
+table.cell(box, 0, 0, str.format('Avg 30 Days: {0, number}', math.round(volLast30DayAvg)), text_color=labelTextColor)
+table.cell(box, 1, 0, str.format('Today: {0, number}', math.round(todayVolume)), text_color=labelTextColor)
+
+int percentOf30Day = math.round(todayVolume / volLast30DayAvg * 100)
+table.cell(box, 2, 0, str.format('{0, number}%', percentOf30Day), bgcolor=percentOf30Day >= 100 ? buyColor : labelBgColor, text_color=labelTextColor)
+
+float volLast30bars = (volume[1] + volume[2] + volume[3] + volume[4] + volume[5] + volume[6] + volume[7] + volume[8] + volume[9] + volume[10] + volume[11] + volume[12] + volume[13] + volume[14] + volume[15] + volume[16] + volume[17] + volume[18] + volume[19] + volume[20] + volume[21] + volume[22] + volume[23] + volume[24] + volume[25] + volume[26] + volume[27] + volume[28] + volume[29] + volume[30]) / 30
+table.cell(box, 3, 0, str.format('Avg 30 Bars: {0, number}', math.round(volLast30bars)), text_color=labelTextColor)
+table.cell(box, 4, 0, str.format('Cur Bar: {0, number}', math.round(volume)), text_color=labelTextColor)
+
+int percentOf30Bars = math.round(volume / volLast30bars * 100)
+table.cell(box, 5, 0, str.format('{0, number}%', percentOf30Bars), bgcolor=percentOf30Bars >= 100 ? buyColor : labelBgColor, text_color=labelTextColor)
+
+int sellVolPercent = math.round(sellVolume / volume * 100)
+table.cell(box, 6, 0, str.format('Cur Bar Sell %: {0, number}', sellVolPercent), bgcolor=sellVolPercent > 51 ? sellColor : sellVolPercent < 49 ? buyColor : #FFC800, text_color=labelTextColor)
+
+plot(volume, style=plot.style_columns, color=buyColor, title='Total Volume')
+plot(sellVolume, style=plot.style_columns, color=sellColor, title='Selling Volume')
+plot(ta.sma(volume, volAvgLength), color=color.new(#D2B48C, 0), title='Bar Vol Avg Line', linewidth=2)
+

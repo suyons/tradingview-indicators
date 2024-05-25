@@ -1,0 +1,8 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © syoungs
+
+//@version=5
+indicator("USDKRW Table", overlay = true)
+
+show = table.new(position.bottom_left, 1, 1, color.black)
+table.cell(show, 0, 0, str.format("{0,number,￦#.#}", request.security("FX_IDC:USDKRW", "1", close, currency=currency.KRW) ), 0, 0, text_color=open<=close?#82E0AA:#F1948A)

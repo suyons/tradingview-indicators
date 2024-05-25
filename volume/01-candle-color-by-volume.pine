@@ -1,0 +1,44 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © the_MarketWhisperer
+// Version 1.0
+// (Based on a code that I found somewhere in the TV world)
+// A simple indicator that paints candles with different shades of colors based on the volume transacted. 
+// Supports 6 levels of sensitivity at present.
+// Darkest indicates the most volume transacted. Lightest, the least.
+// Use it for your Volume Spread Analysis and/or in conjunction with any other strategies that you employ.
+// Relative volume is calculated based on EMA (set to 20 period by default)
+
+//@version=5
+indicator(title='Candle Color by Volume', shorttitle='Candle Color by Volume', overlay=true)
+
+length = input(20, 'MA Length')
+volumeRatio = volume / ta.sma(volume, length)
+isUp = close > open
+
+//{
+//=============================================================================================================================
+//Green and red color repository. 1 = lightest / 6 = darkest
+g_01 = #82E0AA
+g_02 = #58D68D
+g_03 = #2ECC71
+g_04 = #28B463
+g_05 = #239B56
+g_06 = #1D8348
+
+r_01 = #F1948A
+r_02 = #EC7063
+r_03 = #E74C3C
+r_04 = #CB4335
+r_05 = #B03A2E
+r_06 = #943126
+//-----------------------------------------------------------------------------------------------------------------------------
+//}
+
+color candleColor = na
+
+if isUp
+    candleColor := volumeRatio > 2 ? g_01 : volumeRatio > 1.5 ? g_02 : volumeRatio > 1.2 ? g_03 : volumeRatio > 0.8 ? g_04 : volumeRatio > 0.4 ? g_05 : g_06
+else
+    candleColor := volumeRatio > 2 ? r_01 : volumeRatio > 1.5 ? r_02 : volumeRatio > 1.2 ? r_03 : volumeRatio > 0.8 ? r_04 : volumeRatio > 0.4 ? r_05 : r_06
+
+barcolor(candleColor)

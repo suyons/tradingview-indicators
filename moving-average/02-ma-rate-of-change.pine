@@ -1,0 +1,26 @@
+//@version=5
+
+indicator("MA Rate of Change")
+
+// Create Moving Average Lines
+typema = input.string(title="MA Type", defval="HMA", inline="2", options = ["SMA", "EMA", "WMA", "HMA", "RMA", "VWMA", "ALMA"])
+lenma = input.int(240, "MA Length", 1, 999, 1)
+src = input(close, "Source")
+ma = switch typema
+    "SMA" => ta.sma(src, lenma)
+    "EMA" => ta.ema(src, lenma)
+    "WMA" => ta.wma(src, lenma)
+    "HMA" => ta.hma(src, lenma)
+    "RMA" => ta.rma(src, lenma)
+    "VWMA" => ta.vwma(src, lenma)
+    "ALMA" => ta.alma(src, lenma, 1, 0)
+// 1st derivative (MA´)
+roc_len = input.int(1,"ROC Length",1,999, inline="1")
+roc_mult = input.int(1000, "ROC Mult", 1)
+roc = ta.roc(ma, roc_len) * roc_mult
+
+// Plot
+hline(0, title="Zero", color=color.new(color.white,50), linestyle=hline.style_solid, linewidth=1, editable=true)
+hline(10, title="High", color=color.new(color.white,50), linestyle=hline.style_dashed, linewidth=1, editable=true)
+hline(-10, title="Low", color=color.new(color.white,50), linestyle=hline.style_dashed, linewidth=1, editable=true)
+plot(roc,"ROC",color=color.new(#f57f17,0),linewidth=2,style=plot.style_line)

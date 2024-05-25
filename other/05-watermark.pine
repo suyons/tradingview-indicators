@@ -1,0 +1,122 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © syoungs
+// @version=5
+
+indicator(title='Watermark', shorttitle='Watermark', overlay=true)
+
+// Title & subtitle text input
+show_title = input.bool(true, '', group = 'title / subtitle', inline = '1')
+title = input.string('TITLE HERE', '', group = 'title / subtitle', inline = '1')
+show_subtitle = input.bool(true, '', group = 'title / subtitle', inline = '1')
+subtitle = input.string('subtitle here', '', group = 'title / subtitle', inline = '1')
+
+// Symbol & time setting
+show_symbol = input.bool(true, 'Symbol', group = 'symbol / time', inline = '1')
+show_time = input.bool(true, 'Time', group = 'symbol / time', inline = '1')
+timezone = input.string('UTC+09:00', '', group = 'symbol / time', inline = '1')
+show_notrealtime = input.bool(false, 'Do not show in realtime (For replay)', group = 'symbol / time', inline = '2')
+
+string symbol_period = switch timeframe.period
+    '60' => '1H'
+    '120' => '2H'
+    '180' => '3H'
+    '240' => '4H'
+    '300' => '5H'
+    '360' => '6H'
+    '420' => '7H'
+    '480' => '8H'
+    '540' => '9H'
+    '600' => '10H'
+    '660' => '11H'
+    '720' => '12H'
+    '780' => '13H'
+    '840' => '14H'
+    '900' => '15H'
+    '960' => '16H'
+    '1020' => '17H'
+    '1080' => '18H'
+    '1140' => '19H'
+    '1200' => '20H'
+    '1260' => '21H'
+    '1320' => '22H'
+    '1380' => '23H'
+    '1440' => 'D'
+    => timeframe.period
+
+if chart.is_kagi
+    symbol_period += ', Kagi'
+if chart.is_linebreak
+    symbol_period += ', Linebreak'
+if chart.is_pnf
+    symbol_period += ', P&F'
+if chart.is_range
+    symbol_period += ', Range'
+if chart.is_renko
+    symbol_period += ', Renko'
+
+symbol_info = syminfo.prefix + ':' + syminfo.ticker + '  [' + symbol_period + ']'
+string time_now = na
+if show_notrealtime
+    time_now := str.format('{0,number,0000}-{1,number,00}-{2,number,00}  ', year(time, timezone), month(time, timezone), dayofmonth(time, timezone)) + str.format('{0,number,00}:{1,number,00}', hour(time, timezone), minute(time, timezone))    
+else
+    time_now := str.format('{0,number,0000}-{1,number,00}-{2,number,00}  ', year(timenow, timezone), month(timenow, timezone), dayofmonth(timenow, timezone)) + str.format('{0,number,00}:{1,number,00}', hour(timenow, timezone), minute(timenow, timezone))
+
+// Title: Font size, color, alignment
+title_color = input.color(color.new(#ffffff, 0), '', inline = '1', group = 'title')
+title_size = input.string('large', '', options = ['auto', 'tiny', 'small', 'normal', 'large', 'huge'], inline = '1', group = 'title')
+title_align = input.string('center', '', options = ['center', 'left', 'right'], inline = '1', group = 'title')
+
+// Subtitle: Font size, color, alignment
+subtitle_color = input.color(color.new(#b2b5be, 0), '', inline = '1', group = 'subtitle')
+subtitle_size = input.string('normal', '', options = ['auto', 'tiny', 'small', 'normal', 'large', 'huge'], inline = '1', group = 'subtitle')
+subtitle_align = input.string('center', '', options = ['center', 'left', 'right'], inline = '1', group = 'subtitle')
+
+// Symbol: Font size, color, alignment
+symbol_color = input.color(color.new(#ffffff, 0), '', inline = '1', group = 'symbol')
+symbol_size = input.string('large', '', options = ['auto', 'tiny', 'small', 'normal', 'large', 'huge'], inline = '1', group = 'symbol')
+symbol_align = input.string('center', '', options = ['center', 'left', 'right'], inline = '1', group = 'symbol')
+
+// Time: Font size, color, alignment
+time_color = input.color(color.new(#ffffff, 0), '', inline = '1', group = 'time')
+time_size = input.string('large', '', options = ['auto', 'tiny', 'small', 'normal', 'large', 'huge'], inline = '1', group = 'time')
+time_align = input.string('center', '', options = ['center', 'left', 'right'], inline = '1', group = 'time')
+
+// Table config 
+title_pos_in = input.int(2, '', 1, 9, 1, inline = '1', group = 'table config')
+title_bg = input.color(color.new(color.blue, 100), '', inline = '1', group = 'table config')
+title_pos = switch title_pos_in
+    1 => position.top_left
+    2 => position.top_center
+    3 => position.top_right
+    4 => position.middle_left
+    5 => position.middle_center
+    6 => position.middle_right
+    7 => position.bottom_left
+    8 => position.bottom_center
+    => position.bottom_right
+
+symbol_pos_in = input.int(8, '', 1, 9, 1, inline = '1', group = 'table config')
+symbol_bg = input.color(color.new(color.blue, 100), '', inline = '1', group = 'table config')
+symbol_pos = switch symbol_pos_in
+    1 => position.top_left
+    2 => position.top_center
+    3 => position.top_right
+    4 => position.middle_left
+    5 => position.middle_center
+    6 => position.middle_right
+    7 => position.bottom_left
+    8 => position.bottom_center
+    => position.bottom_right
+
+// Show tables
+titleTable = table.new(title_pos, 1, 2)
+if show_title
+    table.cell(titleTable, 0, 0, title, 0, 0, title_color, title_align, text_size=title_size, bgcolor=title_bg)
+if show_subtitle
+    table.cell(titleTable, 0, 1, subtitle, 0, 0, subtitle_color, subtitle_align, text_size=subtitle_size, bgcolor = title_bg)
+
+symbolTable = table.new(symbol_pos, 1, 2)
+if show_symbol
+    table.cell(symbolTable, 0, 0, symbol_info, 0, 0, symbol_color, symbol_align, text_size=symbol_size, bgcolor=symbol_bg)
+if show_time
+    table.cell(symbolTable, 0, 1, time_now, 0, 0, time_color, time_align, text_size=time_size, bgcolor=symbol_bg)

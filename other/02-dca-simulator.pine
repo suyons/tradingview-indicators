@@ -1,0 +1,12 @@
+//@version=5
+strategy("DCA Simulator", overlay=true, pyramiding = 10000, default_qty_type = strategy.cash, default_qty_value = 1000, initial_capital = 10000000, currency = currency.USD, commission_type = strategy.commission.percent, commission_value = 0.2)
+
+start_date = input.time(timestamp("2021-12-31T00:00:00"), title="Start Date")
+end_date = input.time(timestamp("2099-12-31T00:00:00"), title="End Date")
+date_range = time >= start_date and time <= end_date
+
+if barstate.ishistory and date_range
+    strategy.entry('Buy', strategy.long)
+
+if barstate.islastconfirmedhistory and date_range
+    strategy.close_all('Sell')

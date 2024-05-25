@@ -1,0 +1,163 @@
+//@version=5
+
+strategy("MA ROC Strategy", "MA ROC Strategy", true, pyramiding=5, default_qty_type = strategy.fixed, default_qty_value = 0.1, initial_capital = 1500, currency = currency.USD, commission_type = strategy.commission.percent, commission_value = 0.04, margin_long = 0, margin_short = 0)
+// Idea #1 : hline long < every ROCs / hline short > every ROCs -> tested but no profits
+// Idea #2 : MA1 crossover MA2
+// Idea #3 : Better 60MA than 120MA
+// Idea #4 : 5MA cross on 20MA extremum point & 60MA ROC ±
+// Idea #5 : Calculate average of all ROCS -> tested but no profits
+// Idea #6 : Bollinger Bands on ROC
+// Idea #7 : Supertrend on ROC
+// Idea #8 : How to utilize Volume?
+
+// Create Moving Average Lines
+ma_type_1 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_type_2 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_type_3 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_type_4 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_type_5 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_len_1 = input.int(title="", defval=20, minval = 2, inline="1", group="MA Length")
+ma_len_2 = input.int(title="", defval=60, minval = 2, inline="1", group="MA Length")
+ma_len_3 = input.int(title="", defval=120, minval = 2, inline="1", group="MA Length")
+ma_len_4 = input.int(title="", defval=240, minval = 2, inline="1", group="MA Length")
+ma_len_5 = input.int(title="", defval=480, minval = 2, inline="1", group="MA Length")
+
+ma1 = switch ma_type_1
+    "SMA" => ta.sma(close, ma_len_1)
+    "EMA" => ta.ema(close, ma_len_1)
+    => ta.wma(close, ma_len_1)
+ma2 = switch ma_type_2
+    "SMA" => ta.sma(close, ma_len_2)
+    "EMA" => ta.ema(close, ma_len_2)
+    => ta.wma(close, ma_len_2)
+ma3 = switch ma_type_3
+    "SMA" => ta.sma(close, ma_len_3)
+    "EMA" => ta.ema(close, ma_len_3)
+    => ta.wma(close, ma_len_3)
+ma4 = switch ma_type_4
+    "SMA" => ta.sma(close, ma_len_4)
+    "EMA" => ta.ema(close, ma_len_4)
+    => ta.wma(close, ma_len_4)
+ma5 = switch ma_type_5
+    "SMA" => ta.sma(close, ma_len_5)
+    "EMA" => ta.ema(close, ma_len_5)
+    => ta.wma(close, ma_len_5)
+
+
+// Create Keltner Channels
+type = input.string(title="Type", defval="EMA", group="Basis MA", inline="1", options = ["SMA", "EMA", "WMA"])
+leng = input.int(title="Length", defval=20, group="Basis MA", inline = "1")
+ma = switch type
+    "SMA" => ta.sma(close, leng)
+    "EMA" => ta.ema(close, leng)
+    "WMA" => ta.wma(close, leng)
+mult = input(2.0, "Multiplier", group="Plot Keltner Channel")
+BandsStyle = input.string("Average True Range", options = ["Average True Range", "True Range", "Range"], title="Bands Style", group="Plot Keltner Channel")
+atrlength = input(10, "ATR Length", group="Plot Keltner Channel")
+rangema = BandsStyle == "True Range" ? ta.tr(true) : BandsStyle == "Average True Range" ? ta.atr(atrlength) : ta.rma(high - low, leng)
+upper = ma + rangema * mult
+lower = ma - rangema * mult
+
+// Plot MA & KC
+plot(ma1,"MA1", color=#F7DC6F, linewidth = 2, style = plot.style_line)
+plot(ma2,"MA2", color=#229954, linewidth = 2, style = plot.style_line)
+plot(ma3,"MA3", color=#5DADE2, linewidth = 2, style = plot.style_line)
+plot(ma4,"MA4", color=#A569BD, linewidth = 2, style = plot.style_line)
+plot(ma5,"MA5", color=#787b86, linewidth = 2, style = plot.style_line)
+
+u = plot(upper, color=color.new(color.red,30), title="Upper", linewidth=1, style=plot.style_line)
+// plot(ma, color=color.new(color.white,70), title="Basis", linewidth=1, style=plot.style_line)
+l = plot(lower, color=color.new(color.green,30), title="Lower", linewidth=1, style=plot.style_line)
+fill(u, l, color=color.rgb(255, 255, 255, 97), title="Background")
+
+// 1st derivative (MA´)
+roc_len = input.int(4,"ROC Length",1,999, inline="1")
+roc1 = ta.roc(ma1,roc_len)
+roc2 = ta.roc(ma2,roc_len)
+roc3 = ta.roc(ma3,roc_len)
+roc4 = ta.roc(ma4,roc_len)
+roc5 = ta.roc(ma5,roc_len)
+
+// Alert
+// alertcondition(bull_con and bull_con[1] != true,title="MA Bullish",message="{{ticker}} {{interval}} | MA Bullish")
+// alertcondition(bear_con and bear_con[1] != true,title="MA Bearish",message="{{ticker}} {{interval}} | MA Bearish")
+// alertcondition(buyc,title='Keltner Buy',message='{{ticker}} {{interval}} | Keltner Buy')
+// alertcondition(sellc,title='Keltner Sell',message='{{ticker}} {{interval}} | Keltner Sell')
+
+
+// Show Buy & Sell signals
+// if bull_con
+//     if bull_con[1] != true
+//         label.new(bar_index, 0, "≡", xloc.bar_index, yloc.belowbar, #26a69a, label.style_none, #26a69a, size.large, text.align_center)
+// else if bear_con
+//     if bear_con[1] != true
+//         label.new(bar_index, 0, "≡", xloc.bar_index, yloc.abovebar, #ef5350, label.style_none, #ef5350, size.large, text.align_center)
+// else
+//     na
+
+// if buyc
+//     label.new(bar_index, 0, "▲", xloc.bar_index, yloc.belowbar, #26a69a, label.style_none, #26a69a, size.small, text.align_center)
+// else if sellc
+//     label.new(bar_index, 0, "▼", xloc.bar_index, yloc.abovebar, #ef5350, label.style_none, #ef5350, size.small, text.align_center)
+// else
+//     na
+
+// Table
+trend = table.new(position.top_center, 5, 1, color.black)
+table.cell(trend, 0, 0, str.tostring(ma_len_1), 0, 0, roc1>0 ? color.green:color.red)
+table.cell(trend, 1, 0, str.tostring(ma_len_2), 0, 0, roc2>0 ? color.green:color.red)
+table.cell(trend, 2, 0, str.tostring(ma_len_3), 0, 0, roc3>0 ? color.green:color.red)
+table.cell(trend, 3, 0, str.tostring(ma_len_4), 0, 0, roc4>0 ? color.green:color.red)
+table.cell(trend, 4, 0, str.tostring(ma_len_5), 0, 0, roc5>0 ? color.green:color.red)
+    
+// Backtest
+time_start = input.time(timestamp("01 Jan 2022 00:00 +0900"),"Start",inline="1", group="Backtest")
+time_end = input.time(timestamp("01 Jan 2023 00:00 +0900"),"End",inline="2", group="Backtest")
+in_date_range = time_start <= time and time <= time_end
+sw_long = input.bool(true,"Long",inline="3",group="Backtest")
+sw_short = input.bool(true,"Short",inline="3",group="Backtest")
+
+// Take profit & Stop loss
+// sw_per = input.bool(true,"%",inline="1",group="TP & SL")
+// tp_per = input.float(3.0,"TP",0.1,99.9,inline="1",step=0.1,group="TP & SL") / 100
+// sl_per = input.float(2.0,"SL",0.1,99.9,inline="1",step=0.1,group="TP & SL") / 100
+
+// long_tp_per = strategy.position_avg_price * (1+tp_per)
+// long_sl_per = strategy.position_avg_price * (1-sl_per)
+// short_tp_per = strategy.position_avg_price * (1-tp_per)
+// short_sl_per = strategy.position_avg_price * (1+sl_per)
+
+// sw_tick = input.bool(false,"Ticks",inline="2",group="TP & SL")
+// tp_tick = input.int(150,"TP",10,1000,10,inline="2",group="TP & SL")
+// sl_tick = input.int(100,"SL",10,1000,10,inline="2",group="TP & SL")
+
+// Conditions
+bull_con = roc3 > 0 and roc4 > 0
+bear_con = roc3 < 0 and roc4 < 0
+
+buyc = ta.crossunder(close, lower)
+sellc = ta.crossover(close, upper)
+
+
+long_con = sw_long and bull_con and buyc
+short_con = sw_short and bear_con and sellc
+
+if in_date_range
+    if long_con
+        strategy.entry("Open Long",strategy.long)
+    if short_con
+        strategy.entry("Open Short",strategy.short)
+
+    if strategy.position_size > 0 and sellc
+        strategy.close("Open Long", qty_percent=100, comment="Close Long")
+        // if sw_per
+        //     strategy.exit("Close Long", stop = long_sl_per, limit = long_tp_per)
+        // if sw_tick
+        //     strategy.exit("Close Long", profit=tp_tick, loss=sl_tick)
+    if strategy.position_size < 0 and buyc
+        strategy.close("Open Short", qty_percent=100, comment="Close Short")
+        // if sw_per
+        //     strategy.exit("Close Short", stop = short_sl_per, limit = short_tp_per)
+        // if sw_tick
+        //     strategy.exit("Close Short", profit=tp_tick, loss=sl_tick)
+

@@ -1,0 +1,19 @@
+//@version=5
+indicator("Stochastic")
+
+periodK1 = input.int(20, title="", minval=1, group="Stoch 01: %K L / %K S / %D S", inline="1")
+smoothK1 = input.int(12, title="", minval=1, group="Stoch 01: %K L / %K S / %D S", inline="1")
+smoothD1 = input.int(12, title="", minval=1, group="Stoch 01: %K L / %K S / %D S", inline="1")
+k1 = ta.sma(ta.stoch(close, high, low, periodK1), smoothK1)
+d1 = ta.sma(k1, smoothD1)
+
+u5 = plot(k1 > 80 ? 80:na, title="Upper", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+hline(50, title="Basis", color=color.new(color.white,50), linestyle=hline.style_dashed, linewidth=1, editable=false)
+l5 = plot(k1 < 20 ? 20:na, title="Lower", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+
+k5 = plot(k1, title="%K 01", color=#FFFFFF, linewidth=2)
+plot(d1, title="%D 01", color=#9598a1, linewidth=1, display=display.all)
+
+// Overbought = #F6465D / Oversold = #0ECB81
+fill(u5, k5, color=color.new(#0ECB81, 50), editable=false)
+fill(l5, k5, color=color.new(#F6465D, 50), editable=false)

@@ -1,0 +1,70 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © syoungs
+
+//@version=5
+strategy("Bollinger Bands Strategy", "Bollinger Bands Strategy", overlay=true)
+
+// Input settings
+length_basis = input.int(120, "Basis Len", minval=1, inline="1", group="Band")
+length_stdev = input.int(120, "Stdev Len", minval=1, inline="1", group="Band")
+src = input(close, title="Source", inline="2", group="Band")
+type_ma = input.string(title="MA Type", defval="HMA", inline="2", options = ["SMA", "EMA", "WMA", "HMA", "RMA", "VWMA", "ALMA"], group="Band")
+
+// Basis calculation
+basis = switch type_ma
+    "SMA" => ta.sma(src, length_basis)
+    "EMA" => ta.ema(src, length_basis)
+    "WMA" => ta.wma(src, length_basis)
+    "HMA" => ta.hma(src, length_basis)
+    "RMA" => ta.rma(src, length_basis)
+    "VWMA" => ta.vwma(src, length_basis)
+    "ALMA" => ta.alma(src, length_basis, 1, 0)
+
+basis_color = ta.roc(basis, 1) >= 0 ? color.new(#26a69a, 20) : color.new(#ff5555, 20)
+bb_stdev = ta.stdev(close, length_stdev, false)
+
+// Levels
+L1 = input.float(2.0, "L1", inline="3", group="Band")
+L2 = input.float(1.0, "L2", inline="3", group="Band")
+L3 = input.float(0.5, "L3", inline="3", group="Band")
+L4 = input.float(-0.5, "L4", inline="4", group="Band")
+L5 = input.float(-1.0, "L5", inline="4", group="Band")
+L6 = input.float(-2.0, "L6", inline="4", group="Band")
+
+// Level calculations
+pL1 = basis + L1 * bb_stdev
+pL2 = basis + L2 * bb_stdev
+pL3 = basis + L3 * bb_stdev
+pL4 = basis + L4 * bb_stdev
+pL5 = basis + L5 * bb_stdev
+pL6 = basis + L6 * bb_stdev
+
+// Plotting
+plot(basis, "MA", color=basis_color, linewidth=2, display=display.none)
+p_pL1 = plot(pL1, "L1", color=color.new(#b2b5be, 50), style=plot.style_stepline, display=display.none)
+plot(pL2, "L2", color=color.new(#ff9800, 50), display=display.none)
+plot(pL3, "L3", color=color.new(#b2b5be, 50), display=display.none)
+plot(pL4, "L4", color=color.new(#b2b5be, 50), display=display.none)
+plot(pL5, "L5", color=color.new(#ff9800, 50), display=display.none)
+p_pL6 = plot(pL6, "L6", color=color.new(#b2b5be, 50), style=plot.style_stepline, display=display.none)
+fill(p_pL1, p_pL6, title="Fill", color=color.new(#b2b5be, 85), display=display.all)
+
+alertcondition(ta.crossover(close, pL1) or ta.crossunder(close, pL6), "BB 2.0", "{{interval}} / BB 2.0")
+
+perB_width = bb_stdev
+perB = close > basis ? (high - basis) / bb_stdev : (low - basis) / bb_stdev
+
+// Buy and sell signals
+buySignal = ta.crossunder(low, pL6)
+sellSignal = ta.crossover(high, pL1)
+
+// Plot buy and sell signals
+plotshape(buySignal, title="Buy Signal", style=shape.triangleup, location=location.belowbar, color=color.new(color.green, 20), size=size.small)
+plotshape(sellSignal, title="Sell Signal", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 20), size=size.small)
+
+// Strategy entries and exits
+if (buySignal)
+    strategy.entry("Buy", strategy.long)
+
+if (sellSignal)
+    strategy.close("Buy")

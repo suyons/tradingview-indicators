@@ -1,0 +1,37 @@
+//@version=5
+indicator("Fibonacci Bollinger Bands", overlay=true)
+
+length_basis = input.int(100, "Basis Len", minval=1, inline="1", group="Bollinger Band")
+length_stdev = input.int(100, "Stdev Len", minval=1, inline="1", group="Bollinger Band")
+src = input(close, title="Source", inline="2", group="Bollinger Band")
+typebb = input.string(title="MA Type", defval="SMA", inline="2", options = ["SMA", "EMA", "WMA"], group="Bollinger Band")
+mult = input.float(2.0, minval=0.001, maxval=50, title="StdDev", inline="3", group="Bollinger Band")
+basis = switch typebb
+    "SMA" => ta.sma(src, length_basis)
+    "EMA" => ta.ema(src, length_basis)
+    "WMA" => ta.wma(src, length_basis)
+dev = mult * ta.stdev(src, length_stdev)
+upper = basis + dev
+lower = basis - dev
+offset = input.int(0, "Offset", minval = -500, maxval = 500, inline="3", group="Bollinger Band")
+plot(basis, "Basis MA", color=color.new(#ffffff, 20), linewidth = 2, offset = offset)
+p1_1 = plot(upper, "Upper", color=color.new(#FFFFFF, 20), offset = offset)
+p1_2 = plot(lower, "Lower", color=color.new(#FFFFFF, 20), offset = offset)
+
+fib_in_1 = input.float(0.786, "1", minval=0.001, maxval = 0.999, step=0.001, inline="1", group="Fibonacci IN")
+fib_in_1_p = plot(lower+fib_in_1*dev*2, "IN1", #787b86)
+fib_in_2 = input.float(0.618, "2", minval=0.001, maxval = 0.999, step=0.001, inline="1", group="Fibonacci IN")
+fib_in_2_p = plot(lower+fib_in_2*dev*2, "IN2", #787b86)
+fib_in_3 = input.float(0.382, "3", minval=0.001, maxval = 0.999, step=0.001, inline="2", group="Fibonacci IN")
+fib_in_3_p = plot(lower+fib_in_3*dev*2, "IN3", #787b86)
+fib_in_4 = input.float(0.236, "4", minval=0.001, maxval = 0.999, step=0.001, inline="2", group="Fibonacci IN")
+fib_in_4_p = plot(lower+fib_in_4*dev*2, "IN4", #787b86)
+
+fib_ex_1 = input.float(1.618, "1", minval=-9.999, maxval = 9.999, step=0.001, inline="1", group="Fibonacci EX")
+fib_ex_1_p = plot(lower+fib_ex_1*dev*2, "EX1", #f23645)
+fib_ex_2 = input.float(1.272, "2", minval=-9.999, maxval = 9.999, step=0.001, inline="1", group="Fibonacci EX")
+fib_ex_2_p = plot(lower+fib_ex_2*dev*2, "EX2", #ff9800)
+fib_ex_3 = input.float(-0.272, "3", minval=-9.999, maxval = 9.999, step=0.001, inline="2", group="Fibonacci EX")
+fib_ex_3_p = plot(lower+fib_ex_3*dev*2, "EX3", #ff9800)
+fib_ex_4 = input.float(-0.618, "4", minval=-9.999, maxval = 9.999, step=0.001, inline="2", group="Fibonacci EX")
+fib_ex_4_p = plot(lower+fib_ex_4*dev*2, "EX4", #f23645)

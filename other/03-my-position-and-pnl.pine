@@ -1,0 +1,44 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © su02ga
+
+//@version=5
+indicator("My Position and PnL", overlay=true)
+
+euro = request.security("FX:EURUSD", "60", close)
+yen = request.security("FX:USDJPY", "60", close)
+bitcoin = request.security("BINANCE:BTCUSDT", "60", close)
+won = request.security("FX_IDC:USDKRW", "60", close)
+
+eur_price = input.float(0, "€", inline="1")
+eur_qty = input.float(0, "Q", inline="1") * 100000
+eur_pnl = eur_qty >= 0 ? euro*eur_qty - eur_price*eur_qty : eur_price * -eur_qty - euro * -eur_qty
+jpy_price = input.float(0, "¥", inline="2")
+jpy_qty = input.float(0, "Q", inline="2") * 100000
+jpy_pnl = jpy_qty >= 0 ? yen*jpy_qty - jpy_price*jpy_qty : jpy_price * -jpy_qty - yen * -jpy_qty
+jpy_pnl := jpy_pnl / request.security("FX:USDJPY", "60", close)
+btc_price = input.float(0, "₿", inline="3")
+btc_qty = input.float(0, "Q", inline="3")
+btc_pnl = btc_qty >= 0 ? bitcoin*btc_qty - btc_price*btc_qty : btc_price * -btc_qty - bitcoin * -btc_qty
+
+pnl = eur_pnl + jpy_pnl + btc_pnl
+pnl_str = str.format("{0,number,#.##}", pnl)
+
+
+show = table.new(position.top_left, 1, 1, color.black)
+table.cell(show, 0, 0, pnl_str, 0, 0, text_color = pnl>=0 ?#82E0AA:#F1948A)
+
+alertMsg = ""
+if eur_qty > 0
+    alertMsg += str.format("EUR: {0,number,#.####} | Buy: {1,number,#.####} | PnL: {2,number,#.##}\n", euro, eur_price, eur_pnl)
+else if eur_qty < 0
+    alertMsg += str.format("EUR: {0,number,#.####} | Sell: {1,number,#.####} | PnL: {2,number,#.##}\n", euro, eur_price, eur_pnl)
+if jpy_qty > 0
+    alertMsg += str.format("JPY: {0,number,#.####} | Buy: {1,number,#.####} | PnL: {2,number,#.##}\n", yen, jpy_price, jpy_pnl)
+else if jpy_qty < 0
+    alertMsg += str.format("JPY: {0,number,#.####} | Sell: {1,number,#.####} | PnL: {2,number,#.##}\n", yen, jpy_price, jpy_pnl)
+if btc_qty > 0
+    alertMsg += str.format("BTC: {0,number,#.####} | Buy: {1,number,#.####} | PnL: {2,number,#.##}\n", bitcoin, btc_price, btc_pnl)
+else if btc_qty < 0
+    alertMsg += str.format("BTC: {0,number,#.####} | Sell: {1,number,#.####} | PnL: {2,number,#.##}\n", bitcoin, btc_price, btc_pnl)
+
+alert(alertMsg, alert.freq_once_per_bar_close)

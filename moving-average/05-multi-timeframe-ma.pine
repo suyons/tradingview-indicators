@@ -1,0 +1,134 @@
+//@version=5
+
+indicator("Multi Timeframe MA", overlay = true)
+
+time01 = input.timeframe(title="01", defval="1", inline = "1")
+type01 = input.string(title="", defval="WMA", inline="1", options = ["SMA", "EMA", "WMA"])
+leng01 = input.int(title="", defval=5, inline = "1")
+cls01 = request.security(syminfo.tickerid,time01,close)
+ma01 = switch type01
+    "SMA" => ta.sma(cls01, leng01)
+    "EMA" => ta.ema(cls01, leng01)
+    "WMA" => ta.wma(cls01, leng01)
+plot(ma01,"MA01", color=#faa1a4, linewidth = 2, style = plot.style_line)
+
+time02 = input.timeframe(title="02", defval="1", inline = "2")
+type02 = input.string(title="", defval="WMA", inline="2", options = ["SMA", "EMA", "WMA"])
+leng02 = input.int(title="", defval=10, inline = "2")
+cls02 = request.security(syminfo.tickerid,time02,close)
+ma02 = switch type02
+    "SMA" => ta.sma(cls02, leng02)
+    "EMA" => ta.ema(cls02, leng02)
+    "WMA" => ta.wma(cls02, leng02)
+plot(ma02,"MA02", color=#f77c80, linewidth = 2, style = plot.style_line)
+
+time03 = input.timeframe(title="03", defval="1", inline = "3")
+type03 = input.string(title="", defval="WMA", inline="3", options = ["SMA", "EMA", "WMA"])
+leng03 = input.int(title="", defval=20, inline = "3")
+cls03 = request.security(syminfo.tickerid,time03,close)
+ma03 = switch type03
+    "SMA" => ta.sma(cls03, leng03)
+    "EMA" => ta.ema(cls03, leng03)
+    "WMA" => ta.wma(cls03, leng03)
+plot(ma03,"MA03", color=#f7525f, linewidth = 2, style = plot.style_line)
+
+time04 = input.timeframe(title="04", defval="1", inline = "4")
+type04 = input.string(title="", defval="WMA", inline="4", options = ["SMA", "EMA", "WMA"])
+leng04 = input.int(title="", defval=50, inline = "4")
+cls04 = request.security(syminfo.tickerid,time04,close)
+ma04 = switch type04
+    "SMA" => ta.sma(cls04, leng04)
+    "EMA" => ta.ema(cls04, leng04)
+    "WMA" => ta.wma(cls04, leng04)
+plot(ma04,"MA04", color=#b22833, linewidth = 2, style = plot.style_line)
+
+time05 = input.timeframe(title="05", defval="5", inline = "5")
+type05 = input.string(title="", defval="WMA", inline="5", options = ["SMA", "EMA", "WMA"])
+leng05 = input.int(title="", defval=5, inline = "5")
+cls05 = request.security(syminfo.tickerid,time05,close)
+ma05 = switch type05
+    "SMA" => ta.sma(cls05, leng05)
+    "EMA" => ta.ema(cls05, leng05)
+    "WMA" => ta.wma(cls05, leng05)
+plot(ma05,"MA05", color=#a5d6a7, linewidth = 2, style = plot.style_line)
+
+time06 = input.timeframe(title="06", defval="5", inline = "6")
+type06 = input.string(title="", defval="WMA", inline="6", options = ["SMA", "EMA", "WMA"])
+leng06 = input.int(title="", defval=10, inline = "6")
+cls06 = request.security(syminfo.tickerid,time06,close)
+ma06 = switch type06
+    "SMA" => ta.sma(cls06, leng06)
+    "EMA" => ta.ema(cls06, leng06)
+    "WMA" => ta.wma(cls06, leng06)
+plot(ma06,"MA06", color=#81c784, linewidth = 2, style = plot.style_line)
+
+time07 = input.timeframe(title="07", defval="5", inline = "7")
+type07 = input.string(title="", defval="WMA", inline="7", options = ["SMA", "EMA", "WMA"])
+leng07 = input.int(title="", defval=20, inline = "7")
+cls07 = request.security(syminfo.tickerid,time07,close)
+ma07 = switch type07
+    "SMA" => ta.sma(cls07, leng07)
+    "EMA" => ta.ema(cls07, leng07)
+    "WMA" => ta.wma(cls07, leng07)
+plot(ma07,"MA07", color=#66bb6a, linewidth = 2, style = plot.style_line)
+
+time08 = input.timeframe(title="08", defval="5", inline = "8")
+type08 = input.string(title="", defval="WMA", inline="8", options = ["SMA", "EMA", "WMA"])
+leng08 = input.int(title="", defval=50, inline = "8")
+cls08 = request.security(syminfo.tickerid,time08,close)
+ma08 = switch type08
+    "SMA" => ta.sma(cls08, leng08)
+    "EMA" => ta.ema(cls08, leng08)
+    "WMA" => ta.wma(cls08, leng08)
+plot(ma08,"MA08", color=#388e3c, linewidth = 2, style = plot.style_line)
+
+time09 = input.timeframe(title="09", defval="15", inline = "9")
+type09 = input.string(title="", defval="WMA", inline="9", options = ["SMA", "EMA", "WMA"])
+leng09 = input.int(title="", defval=5, inline = "9")
+cls09 = request.security(syminfo.tickerid,time09,close)
+ma09 = switch type09
+    "SMA" => ta.sma(cls09, leng09)
+    "EMA" => ta.ema(cls09, leng09)
+    "WMA" => ta.wma(cls09, leng09)
+plot(ma09,"MA09", color=#90bff9, linewidth = 2, style = plot.style_line)
+
+time10 = input.timeframe(title="10", defval="15", inline = "10")
+type10 = input.string(title="", defval="WMA", inline="10", options = ["SMA", "EMA", "WMA"])
+leng10 = input.int(title="", defval=10, inline = "10")
+cls10 = request.security(syminfo.tickerid,time10,close)
+ma10 = switch type10
+    "SMA" => ta.sma(cls10, leng10)
+    "EMA" => ta.ema(cls10, leng10)
+    "WMA" => ta.wma(cls10, leng10)
+plot(ma10,"MA10", color=#5b9cf6, linewidth = 2, style = plot.style_line)
+
+time11 = input.timeframe(title="11", defval="15", inline = "11")
+type11 = input.string(title="", defval="WMA", inline="11", options = ["SMA", "EMA", "WMA"])
+leng11 = input.int(title="", defval=20, inline = "11")
+cls11 = request.security(syminfo.tickerid,time11,close)
+ma11 = switch type11
+    "SMA" => ta.sma(cls11, leng11)
+    "EMA" => ta.ema(cls11, leng11)
+    "WMA" => ta.wma(cls11, leng11)
+plot(ma11,"MA11", color=#3179f5, linewidth = 2, style = plot.style_line)
+
+time12 = input.timeframe(title="12", defval="15", inline = "12")
+type12 = input.string(title="", defval="WMA", inline="12", options = ["SMA", "EMA", "WMA"])
+leng12 = input.int(title="", defval=50, inline = "12")
+cls12 = request.security(syminfo.tickerid,time12,close)
+ma12 = switch type12
+    "SMA" => ta.sma(cls12, leng12)
+    "EMA" => ta.ema(cls12, leng12)
+    "WMA" => ta.wma(cls12, leng12)
+plot(ma12,"MA12", color=#1848cc, linewidth = 2, style = plot.style_line)
+
+// Color Code (4x3)
+// 01 faa1a4 02 f77c80 03 f7525f 04 b22833
+// 05 a5d6a7 06 81c784 07 66bb6a 08 388e3c
+// 09 90bff9 10 5b9cf6 11 3179f5 12 1848cc
+
+// Color Code (3x4)
+// 01 faa1a4 02 f7525f 03 b22833
+// 04 a5d6a7 05 66bb6a 06 388e3c
+// 07 90bff9 08 3179f5 09 1848cc
+// 10 ce93d8 11 ab47bc 12 7b1fa2

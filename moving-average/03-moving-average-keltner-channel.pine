@@ -1,0 +1,54 @@
+//@version=5
+
+indicator("Moving Average & Keltner Channel", overlay = true)
+
+// Create Moving Average Lines
+ma_type_1 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_type_2 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_type_3 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_type_4 = input.string(title="", defval="SMA", options = ["SMA", "EMA", "WMA"], inline="1", group="MA Type")
+ma_len_1 = input.int(title="", defval=20, minval = 2, inline="1", group="MA Length")
+ma_len_2 = input.int(title="", defval=60, minval = 2, inline="1", group="MA Length")
+ma_len_3 = input.int(title="", defval=120, minval = 2, inline="1", group="MA Length")
+ma_len_4 = input.int(title="", defval=240, minval = 2, inline="1", group="MA Length")
+
+ma1 = switch ma_type_1
+    "SMA" => ta.sma(close, ma_len_1)
+    "EMA" => ta.ema(close, ma_len_1)
+    => ta.wma(close, ma_len_1)
+ma2 = switch ma_type_2
+    "SMA" => ta.sma(close, ma_len_2)
+    "EMA" => ta.ema(close, ma_len_2)
+    => ta.wma(close, ma_len_2)
+ma3 = switch ma_type_3
+    "SMA" => ta.sma(close, ma_len_3)
+    "EMA" => ta.ema(close, ma_len_3)
+    => ta.wma(close, ma_len_3)
+ma4 = switch ma_type_4
+    "SMA" => ta.sma(close, ma_len_4)
+    "EMA" => ta.ema(close, ma_len_4)
+    => ta.wma(close, ma_len_4)
+
+// Create Keltner Channels
+type = input.string(title="Type", defval="EMA", group="Basis MA", inline="1", options = ["SMA", "EMA", "WMA"])
+leng = input.int(title="Length", defval=20, group="Basis MA", inline = "1")
+ma = switch type
+    "SMA" => ta.sma(close, leng)
+    "EMA" => ta.ema(close, leng)
+    "WMA" => ta.wma(close, leng)
+mult = input(2.0, "Multiplier", group="Plot Keltner Channel")
+BandsStyle = input.string("Average True Range", options = ["Average True Range", "True Range", "Range"], title="Bands Style", group="Plot Keltner Channel")
+atrlength = input(10, "ATR Length", group="Plot Keltner Channel")
+rangema = BandsStyle == "True Range" ? ta.tr(true) : BandsStyle == "Average True Range" ? ta.atr(atrlength) : ta.rma(high - low, leng)
+upper = ma + rangema * mult
+lower = ma - rangema * mult
+
+// Plot MA & KC
+plot(ma1,"MA1", color=#F7DC6F, linewidth = 2, style = plot.style_line)
+plot(ma2,"MA2", color=#229954, linewidth = 2, style = plot.style_line)
+plot(ma3,"MA3", color=#5DADE2, linewidth = 2, style = plot.style_line)
+plot(ma4,"MA4", color=#A569BD, linewidth = 2, style = plot.style_line)
+
+u = plot(upper, color=color.new(color.red,70), title="Upper", linewidth=1, style=plot.style_line)
+l = plot(lower, color=color.new(color.green,70), title="Lower", linewidth=1, style=plot.style_line)
+fill(u, l, color=color.rgb(255, 255, 255, 97), title="Background")

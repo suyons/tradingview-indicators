@@ -1,0 +1,37 @@
+//@version=5
+indicator("RSI 3")
+
+length1 = input.int(14, title="", minval=1, group="RSI Settings", inline="1")
+rsi1 = ta.rsi(close, length1)
+length2 = input.int(28, title="", minval=1, group="RSI Settings", inline="1")
+rsi2 = ta.rsi(close, length2)
+length3 = input.int(56, title="", minval=1, group="RSI Settings", inline="1")
+rsi3 = ta.rsi(close, length3)
+
+u1 = plot(rsi1 > 70 ? 70+200:na, title="RSI1 Upper", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+hline(250, title="RSI1 Basis", color=color.new(color.white,50), linestyle=hline.style_dashed, linewidth=1, editable=false)
+l1 = plot(rsi1 < 30 ? 30+200:na, title="RSI1 Lower", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+
+hline(200, title="", color=color.new(color.white,50), linestyle=hline.style_solid, linewidth=1, editable=false)
+
+u2 = plot(rsi2 > 70 ? 70+100:na, title="RSI2 Upper", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+hline(150, title="RSI2 Basis", color=color.new(color.white,50), linestyle=hline.style_dashed, linewidth=1, editable=false)
+l2 = plot(rsi2 < 30 ? 30+100:na, title="RSI2 Lower", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+
+hline(100, title="", color=color.new(color.white,50), linestyle=hline.style_solid, linewidth=1, editable=false)
+
+u3 = plot(rsi3 > 70 ? 70:na, title="RSI3 Upper", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+hline(50, title="RSI3 Basis", color=color.new(color.white,50), linestyle=hline.style_dashed, linewidth=1, editable=false)
+l3 = plot(rsi3 < 30 ? 30:na, title="RSI3 Lower", color=color.new(color.white,50), style=plot.style_line, linewidth=1, editable=false, display=display.none)
+
+p1 = plot(rsi1+200, title="RSI1", color=#7e57c2, linewidth=2)
+p2 = plot(rsi2+100, title="RSI2", color=#7e57c2, linewidth=2)
+p3 = plot(rsi3, title="RSI3", color=#7e57c2, linewidth=2)
+
+// Overbought = #F6465D / Oversold = #0ECB81
+fill(u1, p1, color=color.new(#0ECB81, 50), editable=false)
+fill(l1, p1, color=color.new(#F6465D, 50), editable=false)
+fill(u2, p2, color=color.new(#0ECB81, 50), editable=false)
+fill(l2, p2, color=color.new(#F6465D, 50), editable=false)
+fill(u3, p3, color=color.new(#0ECB81, 50), editable=false)
+fill(l3, p3, color=color.new(#F6465D, 50), editable=false)

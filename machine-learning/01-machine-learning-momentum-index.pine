@@ -2,7 +2,7 @@
 // © Zeiierman
 
 //@version=5
-indicator(title='Machine Learning Momentum Index (MLMI)', shorttitle='Machine Learning Momentum Index (MLMI)', overlay=true, precision=1)
+indicator(title='Machine Learning Momentum Index (MLMI)', shorttitle='ML Momentum Index', overlay=true, precision=1)
 
 // ~~ ToolTips
 t1 ="This parameter controls the number of neighbors to consider while making a prediction using the k-Nearest Neighbors (k-NN) algorithm. By modifying the value of k, you can change how sensitive the prediction is to local fluctuations in the data. \n\nA smaller value of k will make the prediction more sensitive to local variations and can lead to a more erratic prediction line. \n\nA larger value of k will consider more neighbors, thus making the prediction more stable but potentially less responsive to sudden changes."
