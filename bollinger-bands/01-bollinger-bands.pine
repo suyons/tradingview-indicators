@@ -1,0 +1,39 @@
+//@version=5
+indicator("Bollinger Bands", "Bollinger Bands", true)
+
+// Input
+tf_1 = input.timeframe('5', '', inline = '1', group = 'BAND: TIMEFRAME')
+tf_2 = input.timeframe('15', '', inline = '1', group = 'BAND: TIMEFRAME')
+
+bb_ma_type = input.string(title="Type", defval="HMA", inline="1", options = ["SMA", "EMA", "WMA", "HMA", "RMA", "VWMA", "ALMA"], group="BAND: CONFIG")
+bb_src = input(close, title="Source", inline="1", group="BAND: CONFIG")
+bb_ma_len = input.int(120, "Basis Len", minval=1, inline="2", group="BAND: CONFIG")
+bb_dev_len = input.int(120, "Stdev Len", minval=1, inline="2", group="BAND: CONFIG")
+bb_dev_mult = input.float(2.0, "Stdev Mult", inline="3", group="BAND: CONFIG")
+
+// Fetch
+band(src, type, ma_len, dev_len) =>
+    basis = switch type
+        "SMA" => ta.sma(src, ma_len)
+        "EMA" => ta.ema(src, ma_len)
+        "WMA" => ta.wma(src, ma_len)
+        "HMA" => ta.hma(src, ma_len)
+        "RMA" => ta.rma(src, ma_len)
+        "VWMA" => ta.vwma(src, ma_len)
+        "ALMA" => ta.alma(src, ma_len, 1, 0)
+    stdev = ta.stdev(src, dev_len)
+    upper = basis + stdev * bb_dev_mult
+    lower = basis - stdev * bb_dev_mult
+    [basis, upper, lower]
+
+[basis_1, upper_1, lower_1] = request.security(syminfo.tickerid, tf_1, band(bb_src, bb_ma_type, bb_ma_len, bb_dev_len))
+[basis_2, upper_2, lower_2] = request.security(syminfo.tickerid, tf_2, band(bb_src, bb_ma_type, bb_ma_len, bb_dev_len))
+
+// Plot
+plot(basis_1, "Basis 1", color.new(#00e676, 0), 1)
+plot(upper_1, "Upper 1", color.new(#00e676, 0), 1)
+plot(lower_1, "Lower 1", color.new(#00e676, 0), 1)
+
+plot(basis_2, "Basis 2", color.new(#ff9800, 0), 2)
+plot(upper_2, "Upper 2", color.new(#ff9800, 0), 2)
+plot(lower_2, "Lower 2", color.new(#ff9800, 0), 2)

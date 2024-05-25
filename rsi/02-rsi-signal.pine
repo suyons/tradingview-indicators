@@ -1,0 +1,44 @@
+//@version=5
+indicator('RSI Signal', 'RSI Signal', true)
+
+// Input
+tf_1 = input.timeframe("5", "", inline = "1", group = "TIMEFRAME")
+tf_2 = input.timeframe("15", "", inline = "1", group = "TIMEFRAME")
+tf_3 = input.timeframe("60", "", inline = "1", group = "TIMEFRAME")
+tf_4 = input.timeframe("240", "", inline = "1", group = "TIMEFRAME")
+
+val_high = input.int(60, "", inline = "1", group = "LINE H / M / L")
+val_mid = input.int(50, "", inline = "1", group = "LINE H / M / L")
+val_low = input.int(40, "", inline = "1", group = "LINE H / M / L")
+
+rsi_len = input.int(21, "", inline = "1", group = "LEN / SRC")
+rsi_src = input.source(close, "", inline = "1", group = "LEN / SRC")
+
+// Fetch
+rsi_1 = request.security(syminfo.tickerid, tf_1, ta.rsi(rsi_src, rsi_len))
+rsi_2 = request.security(syminfo.tickerid, tf_2, ta.rsi(rsi_src, rsi_len))
+rsi_3 = request.security(syminfo.tickerid, tf_3, ta.rsi(rsi_src, rsi_len))
+rsi_4 = request.security(syminfo.tickerid, tf_4, ta.rsi(rsi_src, rsi_len))
+
+// Condition
+rsi_current = switch timeframe.period
+    tf_1 => rsi_1
+    tf_2 => rsi_2
+    tf_3 => rsi_3
+    tf_4 => rsi_4
+    => na
+
+buy_signal = rsi_4 > val_mid and ta.crossover(rsi_current, val_low)
+sell_signal = rsi_4 < val_mid and ta.crossunder(rsi_current, val_high)
+
+// Plot
+plotshape(buy_signal, title = "Buy Signal", style=shape.triangleup, location=location.belowbar, color=color.new(color.green, 20), size=size.small)
+plotshape(sell_signal, title = "Sell Signal", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 20), size=size.small)
+
+table_data = table.new(position = position.top_center, columns = 4, rows = 1, bgcolor = color.new(color.white, 100))
+table.cell(table_data, 0, 0, str.format("{0, number, integer}", rsi_1), text_color = rsi_1 > val_mid ? color.new(color.green, 10) : color.new(color.red, 10))
+table.cell(table_data, 1, 0, str.format("{0, number, integer}", rsi_2), text_color = rsi_2 > val_mid ? color.new(color.green, 10) : color.new(color.red, 10))
+table.cell(table_data, 2, 0, str.format("{0, number, integer}", rsi_3), text_color = rsi_3 > val_mid ? color.new(color.green, 10) : color.new(color.red, 10))
+table.cell(table_data, 3, 0, str.format("{0, number, integer}", rsi_4), text_color = rsi_4 > val_mid ? color.new(color.green, 10) : color.new(color.red, 10))
+
+buy_series = not (buy[1] or buy[2] or buy[3] or buy[4] or buy[5])

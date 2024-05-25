@@ -1,0 +1,31 @@
+//@version=5
+indicator('RSI Oscillator', 'RSI Oscillator', false)
+
+// Input
+tf_1 = input.timeframe("5", "", inline = "1", group = "TIMEFRAME")
+tf_2 = input.timeframe("15", "", inline = "1", group = "TIMEFRAME")
+tf_3 = input.timeframe("60", "", inline = "1", group = "TIMEFRAME")
+tf_4 = input.timeframe("240", "", inline = "1", group = "TIMEFRAME")
+
+val_high = input.int(60, "", inline = "1", group = "LINE H / M / L")
+val_mid = input.int(50, "", inline = "1", group = "LINE H / M / L")
+val_low = input.int(40, "", inline = "1", group = "LINE H / M / L")
+
+rsi_len = input.int(21, "", inline = "1", group = "LEN / SRC")
+rsi_src = input.source(close, "", inline = "1", group = "LEN / SRC")
+ 
+// Fetch
+rsi_1 = request.security(syminfo.tickerid, tf_1, ta.rsi(rsi_src, rsi_len))
+rsi_2 = request.security(syminfo.tickerid, tf_2, ta.rsi(rsi_src, rsi_len))
+rsi_3 = request.security(syminfo.tickerid, tf_3, ta.rsi(rsi_src, rsi_len))
+rsi_4 = request.security(syminfo.tickerid, tf_4, ta.rsi(rsi_src, rsi_len))
+
+// Plot
+line_high = hline(val_high, title = "Upper", color = color.gray, linestyle = hline.style_dotted, linewidth = 1)
+line_mid = hline(val_mid, title = "Middle", color = color.gray, linestyle = hline.style_dotted, linewidth = 1)
+line_lower = hline(val_low, title = "Lower", color = color.gray, linestyle = hline.style_dotted, linewidth = 1)
+
+plot(rsi_1, color=color.new(#00e676, 0), linewidth=1, title='RSI_1')
+plot(rsi_2, color=color.new(#ff9800, 0), linewidth=2, title='RSI_2')
+plot(rsi_3, color=color.new(#00bcd4, 0), linewidth=3, title='RSI_3')
+plot(rsi_4, color=color.new(#e040fb, 0), linewidth=4, title='RSI_4')

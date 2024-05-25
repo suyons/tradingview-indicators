@@ -1,0 +1,83 @@
+//@version=5
+indicator('RSI + BB Signal Alert', 'RSI + BB Signal Alert', true)
+
+// Input
+tf_1 = input.timeframe('', '', inline='1', group='TIMEFRAME')
+tf_2 = input.timeframe('60', '', inline='1', group='TIMEFRAME')
+
+line_val_1 = input.int(50, '', inline='1', group='LINE')
+line_val_2 = input.int(30, '', inline='1', group='LINE')
+line_val_3 = input.int(10, '', inline='1', group='LINE')
+line_val_4 = input.int(-10, '', inline='2', group='LINE')
+line_val_5 = input.int(-30, '', inline='2', group='LINE')
+line_val_6 = input.int(-50, '', inline='2', group='LINE')
+
+rsi_len = input.int(14, 'Length', inline='1', group='RSI: CONFIG')
+rsi_src = input.source(close, 'Source', inline='1', group='RSI: CONFIG')
+
+bb_ma_type = input.string(title="Type", defval="HMA", inline="1", options=["SMA", "EMA", "WMA", "HMA", "RMA", "VWMA", "ALMA"], group="BAND: CONFIG")
+bb_src = input(close, title="Source", inline="1", group="BAND: CONFIG")
+bb_ma_len = input.int(120, "Basis Len", minval=1, inline="2", group="BAND: CONFIG")
+bb_dev_len = input.int(120, "Stdev Len", minval=1, inline="2", group="BAND: CONFIG")
+bb_dev_mult = input.float(2.0, "Stdev Mult", inline="3", group="BAND: CONFIG")
+
+sig_lookback = input.int(10, 'Lookback', inline='1', group='SIGNAL: CONFIG')
+sig_length = input.int(100, 'Length', inline='1', group='SIGNAL: CONFIG')
+
+// Fetch
+rsi_1 = request.security(syminfo.tickerid, tf_1, ta.rsi(rsi_src, rsi_len)) - 50
+rsi_2 = request.security(syminfo.tickerid, tf_2, ta.rsi(rsi_src, rsi_len)) - 50
+
+band(src, type, ma_len, dev_len) =>
+    basis = switch type
+        "SMA" => ta.sma(src, ma_len)
+        "EMA" => ta.ema(src, ma_len)
+        "WMA" => ta.wma(src, ma_len)
+        "HMA" => ta.hma(src, ma_len)
+        "RMA" => ta.rma(src, ma_len)
+        "VWMA" => ta.vwma(src, ma_len)
+        "ALMA" => ta.alma(src, ma_len, 1, 0)
+    stdev = ta.stdev(src, dev_len)
+    upper = basis + stdev * bb_dev_mult
+    lower = basis - stdev * bb_dev_mult
+    perb = 100 * (src - basis) / (stdev * bb_dev_mult * 2)
+    [basis, upper, lower, perb]
+
+[basis_1, upper_1, lower_1, perb_1] = request.security(syminfo.tickerid, tf_1, band(bb_src, bb_ma_type, bb_ma_len, bb_dev_len))
+[basis_2, upper_2, lower_2, perb_2] = request.security(syminfo.tickerid, tf_2, band(bb_src, bb_ma_type, bb_ma_len, bb_dev_len))
+
+// Condition
+trend_up = rsi_2 > line_val_3
+trend_side = line_val_3 > rsi_2 and rsi_2 > line_val_4
+trend_down = line_val_4 > rsi_2
+
+buy = (trend_down or trend_side) and perb_1 < line_val_6
+sell = (trend_up or trend_side) and perb_1 > line_val_1
+
+lookback(side, len) =>
+    bool result = false
+    for i = 1 to len
+        if side[i]
+            result := true
+    result
+
+buy_condition = buy and not lookback(buy, sig_lookback)
+sell_condition = sell and not lookback(sell, sig_lookback)
+
+// Plot
+plot(basis_1, "Basis 1", color.new(#00e676, 0), 1)
+plot(upper_1, "Upper 1", color.new(#00e676, 0), 1)
+plot(lower_1, "Lower 1", color.new(#00e676, 0), 1)
+
+plot(basis_2, "Basis 2", color.new(#ff9800, 0), 2)
+plot(upper_2, "Upper 2", color.new(#ff9800, 0), 2)
+plot(lower_2, "Lower 2", color.new(#ff9800, 0), 2)
+
+// Signal
+if buy_condition
+    line.new(x1 = bar_index, y1 = close, x2 = bar_index + sig_length, y2 = close, color = color.new(color.green, 30), style = line.style_solid, width = 4)
+    alert('{"symbol":"'+syminfo.ticker+'","side":"Buy","price":'+str.tostring(close)+'}', alert.freq_once_per_bar_close)
+
+if sell_condition
+    line.new(x1 = bar_index, y1 = close, x2 = bar_index + sig_length, y2 = close, color = color.new(color.red, 30), style = line.style_solid, width = 4)
+    alert('{"symbol":"'+syminfo.ticker+'","side":"Sell","price":'+str.tostring(close)+'}', alert.freq_once_per_bar_close)
