@@ -2,8 +2,8 @@
 indicator("Bollinger Bands", "Bollinger Bands", true)
 
 // Input
-tf_1 = input.timeframe('5', '', inline = '1', group = 'BAND: TIMEFRAME')
-tf_2 = input.timeframe('15', '', inline = '1', group = 'BAND: TIMEFRAME')
+tf_1 = input.timeframe('', '', inline = '1', group = 'BAND: TIMEFRAME')
+tf_2 = input.timeframe('60', '', inline = '1', group = 'BAND: TIMEFRAME')
 
 bb_ma_type = input.string(title="Type", defval="HMA", inline="1", options = ["SMA", "EMA", "WMA", "HMA", "RMA", "VWMA", "ALMA"], group="BAND: CONFIG")
 bb_src = input(close, title="Source", inline="1", group="BAND: CONFIG")
