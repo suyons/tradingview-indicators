@@ -1,0 +1,59 @@
+//@version=6
+
+indicator(title = 'Renko Emulator', shorttitle = 'Renko Emulator', overlay = true)
+
+// Forked from the script by JustUncleL
+// https://www.tradingview.com/script/CmZUAjHp-STRATEGY-Renko-Emulator-OCC-v1-by-JustUncleL/
+
+renkoMethod = input.string('ATR', title = 'Renko Box Assignment Method', options = ['ATR', 'Traditional'])
+atrLen = input.float(defval = 10, minval = 1, maxval = 100, step = 1, title = 'ATR Length for ATR Renko Method')
+boxSz = input.float(defval = 0.001, minval = 0.0, title = 'Box size for Traditional Renko Method')
+sRchart = input(false, title = 'Show Renko Emulated Bricks on Chart')
+
+intRes2 = input.int(3, minval = 1, title = 'Multiplier of current Resolution for ATR Renko Method')
+
+renRes = renkoMethod == 'Traditional' ? timeframe.period : 
+         timeframe.ismonthly ? str.tostring(timeframe.multiplier * intRes2, '###M') : 
+         timeframe.isweekly ? str.tostring(timeframe.multiplier * intRes2, '###W') : 
+         timeframe.isdaily ? str.tostring(timeframe.multiplier * intRes2, '###D') : 
+         timeframe.isintraday ? str.tostring(timeframe.multiplier * intRes2, '####') : '1D'
+
+renkoID = renkoMethod == 'ATR' ? ticker.renko(syminfo.tickerid, style = 'ATR', param = atrLen) 
+                               : ticker.renko(syminfo.tickerid, style = 'Traditional', param = boxSz)
+
+var float renko_close_fixed = na
+var float renko_open_fixed = na
+var float renko_high_fixed = na
+var float renko_low_fixed = na
+
+renko_close = request.security(renkoID, renRes, close)
+renko_open = request.security(renkoID, renRes, open)
+renko_high = request.security(renkoID, renRes, high)
+renko_low = request.security(renkoID, renRes, low)
+
+newRenkoCandle = ta.change(renko_close) != 0
+
+if newRenkoCandle
+    renko_close_fixed := renko_close
+    renko_open_fixed := renko_open
+    renko_high_fixed := renko_high
+    renko_low_fixed := renko_low
+
+col = renko_close_fixed < renko_open_fixed ? color.fuchsia : color.lime
+
+p1 = plot(sRchart ? renko_close_fixed : na, style = plot.style_circles, linewidth = 2, color = col)
+p2 = plot(sRchart ? renko_open_fixed : na, style = plot.style_circles, linewidth = 2, color = col)
+fill(p1, p2, color = col)
+
+var longCond = false
+var shortCond = false
+longCond := ta.crossover(renko_close_fixed, renko_open_fixed)
+shortCond := ta.crossunder(renko_close_fixed, renko_open_fixed)
+
+plotshape(longCond, style=shape.labelup, location=location.belowbar, color=color.green, text="BUY", textcolor=color.white, size=size.small)
+plotshape(shortCond, style=shape.labeldown, location=location.abovebar, color=color.red, text="SELL", textcolor=color.white, size=size.small)
+
+if longCond
+    alert('BUY', alert.freq_once_per_bar_close)
+if shortCond
+    alert('SELL', alert.freq_once_per_bar_close)
