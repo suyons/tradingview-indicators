@@ -1,0 +1,29 @@
+//@version=6
+indicator(title="ATR Renko", shorttitle="ATR Renko", overlay=true)
+
+atrLength = input.int(title = "ATR Length", defval = 12)
+renkoID = ticker.renko(syminfo.tickerid, style="ATR", param=atrLength)
+
+renko_close = request.security(renkoID, timeframe.period, close)
+renko_open = request.security(renkoID, timeframe.period, open)
+
+var float prev_renko_close = na
+var float prev_renko_open = na
+
+renko_up = renko_close > renko_open  // 초록 블록 (상승)
+renko_down = renko_close < renko_open  // 빨강 블록 (하락)
+
+renko_changed = ta.change(renko_close) != 0  // 새로운 블록이 생겼는지 확인
+
+buySignal = renko_changed and renko_up and (prev_renko_close < prev_renko_open)  // 이전 블록이 하락 -> 현재 상승
+sellSignal = renko_changed and renko_down and (prev_renko_close > prev_renko_open)  // 이전 블록이 상승 -> 현재 하락
+
+if renko_changed
+    prev_renko_close := renko_close
+    prev_renko_open := renko_open
+
+plotshape(buySignal, style=shape.labelup, location=location.belowbar, color=color.green, text="BUY", textcolor=color.white, size=size.small)
+plotshape(sellSignal, style=shape.labeldown, location=location.abovebar, color=color.red, text="SELL", textcolor=color.white, size=size.small)
+
+alertcondition(buySignal, title="Buy")
+alertcondition(sellSignal, title="Sell")

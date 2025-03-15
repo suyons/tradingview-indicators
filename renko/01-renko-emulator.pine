@@ -53,7 +53,14 @@ shortCond := ta.crossunder(renko_close_fixed, renko_open_fixed)
 plotshape(longCond, style=shape.labelup, location=location.belowbar, color=color.green, text="BUY", textcolor=color.white, size=size.small)
 plotshape(shortCond, style=shape.labeldown, location=location.abovebar, color=color.red, text="SELL", textcolor=color.white, size=size.small)
 
+var int lastLongAlert = na
+var int lastShortAlert = na
+
 if longCond
-    alert('BUY', alert.freq_once_per_bar_close)
+    lastLongAlert := bar_index
+
 if shortCond
-    alert('SELL', alert.freq_once_per_bar_close)
+    lastShortAlert := bar_index
+
+alertcondition(bar_index == lastLongAlert, "Buy")
+alertcondition(bar_index == lastShortAlert, "Sell")
