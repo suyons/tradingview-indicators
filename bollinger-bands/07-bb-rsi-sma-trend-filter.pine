@@ -1,0 +1,98 @@
+//@version=6
+strategy("Bollinger + RSI + SMA Trend Filter", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=10)
+
+// 🔹 [1] 인디케이터 설정 (사용자 입력) 그룹화
+lengthBB = input.int(20, title="Bollinger Band Length", minval=1, group="Bollinger Band Parameters")
+src = close
+mult = input.float(2.0, title="Bollinger Band Multiplier", group="Bollinger Band Parameters")
+// RSI 파라미터
+rsiLength = input.int(14, title="RSI Length", minval=1, group="RSI Parameters")
+// 이동평균선 파라미터
+emaShort = input.int(50, title="Short EMA Length", minval=1, group="EMA Parameters")
+emaMid = input.int(100, title="Mid EMA Length", minval=1, group="EMA Parameters")
+emaLong = input.int(200, title="Long EMA Length", minval=1, group="EMA Parameters")
+// 거래량 필터 파라미터
+volPeriod = input.int(20, title="Volume Period", minval=1, group="Volume and Volatility Parameters")
+volMultiplier = input.float(1.5, title="Volume Multiplier", group="Volume and Volatility Parameters")
+// 추세 필터 파라미터
+trendPeriod = input.int(10, title="Trend Period", minval=1, group="Trend Filter Parameters")
+trendThreshold = input.float(0.6, title="Trend Threshold", minval=0, group="Trend Filter Parameters")
+
+// 볼린저 밴드 계산
+basis = ta.sma(src, lengthBB)
+dev = mult * ta.stdev(src, lengthBB)
+upperBB = basis + dev
+lowerBB = basis - dev
+
+// RSI 계산
+rsi = ta.rsi(src, rsiLength)
+
+// 이동 평균선 계산 (추세 및 배열 필터용)
+ema50 = ta.ema(src, emaShort)
+ema100 = ta.ema(src, emaMid)
+ema200 = ta.ema(src, emaLong)
+
+// 🔹 [2] 이동평균선 배열 필터 (정배열/역배열 체크)
+isBullishTrend = ema50 > ema100 and ema100 > ema200  // 정배열
+isBearishTrend = ema50 < ema100 and ema100 < ema200  // 역배열
+
+// 🔹 [3] 횡보장 필터 (최근 30 캔들 이내 골든크로스 & 데드크로스 확인)
+goldenCross = ta.crossover(ema50, ema100)  // 50 → 100 돌파
+deathCross = ta.crossunder(ema50, ema100)  // 50 → 100 하락 돌파
+
+crossEvents = goldenCross ? 1 : deathCross ? -1 : 0
+crossHistory = ta.sma(crossEvents, 30)  // 최근 30개 캔들 내 크로스 발생 수
+
+isRanging = math.abs(crossHistory) > 0  // 0보다 크면 최근 30개 캔들 내 골든 & 데드 크로스가 모두 발생한 횡보장
+
+// 🔹 [4] 변동폭과 거래량 필터
+avgVol = ta.sma(volume, volPeriod)  // 최근 `volPeriod` 기간의 평균 거래량
+maxVol = ta.highest(volume, volPeriod)  // `volPeriod` 기간 내 최대 거래량
+highVol = volume >= maxVol * volMultiplier  // 거래량이 1.5배 이상일 때
+
+avgRange = ta.sma(high - low, volPeriod)  // 최근 `volPeriod` 기간의 평균 변동폭
+highRange = (high - low) >= avgRange * 1.5  // 변동폭이 평균보다 1.5배 크면
+
+// 🔹 [5] 진입 조건 (가중치 부여)
+priceNearUpper = src >= upperBB * 0.99  // 상단 근처
+priceNearLower = src <= lowerBB * 1.01  // 하단 근처
+
+// 롱 진입 조건: 하단 근처, RSI < 40, 상승 추세, 횡보장이 아니며, 거래량과 변동폭이 충분함
+longCondition = (priceNearLower ? 1 : 0) + (rsi < 40 ? 1 : 0) + (isBullishTrend ? 1 : 0) + (not isRanging ? 1 : 0) + (highVol ? 1 : 0) + (highRange ? 1 : 0)
+
+// 숏 진입 조건: 상단 근처, RSI > 60, 하락 추세, 횡보장이 아니며, 거래량과 변동폭이 충분함
+shortCondition = (priceNearUpper ? 1 : 0) + (rsi > 60 ? 1 : 0) + (isBearishTrend ? 1 : 0) + (not isRanging ? 1 : 0) + (highVol ? 1 : 0) + (highRange ? 1 : 0)
+
+// 가중치 기준 값 설정 (조건 충족 시 그 합이 이 값 이상일 때 진입)
+longSignalThreshold = 4  // 롱 진입을 위한 최소 가중치
+shortSignalThreshold = 4  // 숏 진입을 위한 최소 가중치
+
+// 🔹 [6] 매매 진입
+if longCondition >= longSignalThreshold
+    strategy.entry("Long", strategy.long)
+
+if shortCondition >= shortSignalThreshold
+    strategy.entry("Short", strategy.short)
+
+// 🔹 [7] 롱 포지션 청산 조건: BB 상단에 닿았을 때
+if strategy.position_size > 0 and src >= upperBB
+    strategy.close("Long")
+
+// 🔹 [8] 숏 포지션 청산 조건: BB 하단에 닿았을 때
+if strategy.position_size < 0 and src <= lowerBB
+    strategy.close("Short")
+
+// 🔹 [9] 반대 추세가 발생할 때까지 포지션 유지
+if isBearishTrend and strategy.position_size > 0
+    strategy.close("Long")
+
+if isBullishTrend and strategy.position_size < 0
+    strategy.close("Short")
+
+// 🔹 [10] 시각적 표시
+plot(upperBB, color=color.blue, linewidth=1, title="BB Upper")
+plot(lowerBB, color=color.blue, linewidth=1, title="BB Lower")
+plot(basis, color=color.orange, linewidth=1, title="BB Basis")
+plot(ema50, color=color.red, linewidth=2, title="EMA 50")
+plot(ema100, color=color.green, linewidth=2, title="EMA 100")
+plot(ema200, color=color.blue, linewidth=2, title="EMA 200")
