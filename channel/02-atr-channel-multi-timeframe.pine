@@ -1,0 +1,98 @@
+//@version=6
+indicator("Multi-Timeframe Support & Resistance", overlay=true, max_lines_count=500)
+
+// User inputs for each timeframe
+showTF1 = input.bool(true, "Show 1m Support/Resistance", group="Timeframes")
+showTF2 = input.bool(true, "Show 3m Support/Resistance", group="Timeframes")
+showTF3 = input.bool(true, "Show 5m Support/Resistance", group="Timeframes")
+showTF4 = input.bool(true, "Show 15m Support/Resistance", group="Timeframes")
+showTF5 = input.bool(true, "Show 1h Support/Resistance", group="Timeframes")
+showTF6 = input.bool(true, "Show 4h Support/Resistance", group="Timeframes")
+
+// Colors for each timeframe
+color1 = input.color(color.white, "1m Color", group="Colors")
+color2 = input.color(color.purple, "3m Color", group="Colors")
+color3 = input.color(color.green, "5m Color", group="Colors")
+color4 = input.color(color.yellow, "15m Color", group="Colors")
+color5 = input.color(color.blue, "1h Color", group="Colors")
+color6 = input.color(color.fuchsia, "4h Color", group="Colors")
+
+// Advanced settings
+length = input.int(14, "Length for Calculation", minval=1, group="Settings")
+multiplier = input.float(2.0, "ATR Multiplier", minval=0.1, step=0.1, group="Settings")
+extendLines = input.bool(true, "Extend Lines Right", group="Settings")
+displayLabels = input.bool(true, "Show Labels", group="Settings")
+maxBars = input.int(500, "Maximum Bars Look-back", minval=10, group="Settings")
+
+// Function to calculate support and resistance levels for a given timeframe
+getSupportResistanceLevels(timeframe) =>
+    // Request data from the specified timeframe
+    [highTF, lowTF, closeTF, atrTF] = request.security(syminfo.tickerid, timeframe, [high, low, close, ta.atr(length)])
+    
+    // Calculate upper and lower levels based on ATR
+    upperLevel = closeTF + atrTF * multiplier
+    lowerLevel = closeTF - atrTF * multiplier
+    
+    [upperLevel, lowerLevel]
+
+// Get levels for each timeframe
+[level1_upper, level1_lower] = getSupportResistanceLevels("1")
+[level2_upper, level2_lower] = getSupportResistanceLevels("3")
+[level3_upper, level3_lower] = getSupportResistanceLevels("5")
+[level4_upper, level4_lower] = getSupportResistanceLevels("15")
+[level5_upper, level5_lower] = getSupportResistanceLevels("60")
+[level6_upper, level6_lower] = getSupportResistanceLevels("240")
+
+// Draw lines function for a cleaner code
+drawLevels(show, upper, lower, col, label_text) =>
+    if show
+        var line upperLine = na
+        var line lowerLine = na
+        var label upperLabel = na
+        var label lowerLabel = na
+        
+        // Remove old lines and labels when a new bar starts
+        if barstate.isfirst or barstate.isconfirmed
+            line.delete(upperLine)
+            line.delete(lowerLine)
+            label.delete(upperLabel)
+            label.delete(lowerLabel)
+            
+            // Draw new support and resistance lines
+            lineExtend = extendLines ? extend.right : extend.none
+            upperLine := line.new(bar_index - 1, upper, bar_index, upper, color=col, width=2, extend=lineExtend)
+            lowerLine := line.new(bar_index - 1, lower, bar_index, lower, color=col, width=2, extend=lineExtend)
+            
+            // Add labels if enabled
+            if displayLabels
+                upperLabel := label.new(bar_index, upper, label_text + " R", color=color.new(col, 80), 
+                           style=label.style_label_down, textcolor=col, size=size.small)
+                lowerLabel := label.new(bar_index, lower, label_text + " S", color=color.new(col, 80), 
+                           style=label.style_label_up, textcolor=col, size=size.small)
+
+// Draw all timeframe levels
+drawLevels(showTF1, level1_upper, level1_lower, color1, "1m")
+drawLevels(showTF2, level2_upper, level2_lower, color2, "3m")
+drawLevels(showTF3, level3_upper, level3_lower, color3, "5m")
+drawLevels(showTF4, level4_upper, level4_lower, color4, "15m")
+drawLevels(showTF5, level5_upper, level5_lower, color5, "1h")
+drawLevels(showTF6, level6_upper, level6_lower, color6, "4h")
+
+// Plot current values as horizontal lines
+plot(showTF1 ? level1_upper : na, "1m Resistance", color=color1, style=plot.style_line)
+plot(showTF1 ? level1_lower : na, "1m Support", color=color1, style=plot.style_line)
+
+plot(showTF2 ? level2_upper : na, "3m Resistance", color=color2, style=plot.style_line)
+plot(showTF2 ? level2_lower : na, "3m Support", color=color2, style=plot.style_line)
+
+plot(showTF3 ? level3_upper : na, "5m Resistance", color=color3, style=plot.style_line)
+plot(showTF3 ? level3_lower : na, "5m Support", color=color3, style=plot.style_line)
+
+plot(showTF4 ? level4_upper : na, "15m Resistance", color=color4, style=plot.style_line)
+plot(showTF4 ? level4_lower : na, "15m Support", color=color4, style=plot.style_line)
+
+plot(showTF5 ? level5_upper : na, "1h Resistance", color=color5, style=plot.style_line)
+plot(showTF5 ? level5_lower : na, "1h Support", color=color5, style=plot.style_line)
+
+plot(showTF6 ? level6_upper : na, "4h Resistance", color=color6, style=plot.style_line)
+plot(showTF6 ? level6_lower : na, "4h Support", color=color6, style=plot.style_line)
